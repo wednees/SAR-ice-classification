@@ -1,4 +1,1 @@
 # SAR-ice-classification
-
-
-привет
