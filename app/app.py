@@ -125,7 +125,7 @@ def get_model(checkpoint_path: str):
     return load_model(checkpoint_path)
 
 
-def mock_inference(sar_data: dict, patch_size: int = 64) -> dict:
+def inference(sar_data: dict, patch_size: int = 64) -> dict:
     from scipy.ndimage import gaussian_filter
 
     sic_gt  = sar_data.get("SIC")
@@ -155,10 +155,10 @@ def mock_inference(sar_data: dict, patch_size: int = 64) -> dict:
 
         return {"sic": sic, "sod": sod, "floe": floe}
 
-    return _mock_from_sar(sar_data)
+    return from_sar(sar_data)
 
 
-def _mock_from_sar(sar_data: dict) -> dict:
+def from_sar(sar_data: dict) -> dict:
     from scipy.ndimage import gaussian_filter
     import torch
 
@@ -350,12 +350,6 @@ with st.sidebar:
         "Checkpoint path (.pth)",
         value="weights/vit-h_ft60_finetuned_from_mae_pt40_best_combined_score.pth",
     )
-    use_mock = st.checkbox(
-        "Use mock inference (demo mode)",
-        value=True,
-        help="Использует ground truth маски из NC файла + небольшой шум",
-    )
-
     st.divider()
     st.subheader("Processing options")
     patch_size = st.select_slider("Patch size (px)", options=[32, 64, 128, 256], value=64)
@@ -420,7 +414,7 @@ with tab_upload:
         process_btn = False
 
     if process_btn and uploaded_files:
-        if not use_mock and MODEL_AVAILABLE:
+        if  MODEL_AVAILABLE:
             model = get_model(ckpt_path)
         else:
             model = None
@@ -437,8 +431,8 @@ with tab_upload:
                 sar_data = load_nc_file(raw_bytes)
 
             with st.spinner(f"Running inference on `{uploaded_file.name}`…"):
-                if use_mock or model is None:
-                    preds = mock_inference(sar_data, patch_size=patch_size)
+                if model is None:
+                    preds = inference(sar_data, patch_size=patch_size)
                 else:
                     preds = run_inference(model, sar_data, patch_size=patch_size)
 
